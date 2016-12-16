@@ -1,0 +1,6 @@
+---
+# handlers file for role-sftp
+- name: Restart ssh
+  service:
+    name: "{{ sftp_ssh_service }}"
+    state: restarted

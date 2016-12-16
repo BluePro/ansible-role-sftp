@@ -1,0 +1,58 @@
+---
+# tasks file for role-sftp
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Prepare sftp users group
+  group:
+    name: sftpusers
+    state: present
+
+- name: Create sftp users
+  user:
+    name: "{{ item.name }}"
+    groups: sftpusers
+    home: "/home/{{ item.name }}"
+    password: "{{ item.password }}"
+    shell: /bin/false
+  with_items: "{{ sftp_users }}"
+
+- name: Prepare web directories
+  file:
+    path: "/home/{{ item.name }}/www"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+  with_items: "{{ sftp_users }}"
+
+- name: Prepare log directories
+  file:
+    path: "/home/{{ item.name }}/log"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+  with_items: "{{ sftp_users }}"
+
+- name: Prepare temp directories
+  file:
+    path: "/home/{{ item.name }}/tmp"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+  with_items: "{{ sftp_users }}"
+
+- name: Set sftp subsystem
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "^#?Subsystem[ \t]+sftp"
+    line: "Subsystem sftp internal-sftp"
+  notify: Restart ssh
+
+- name: Force SFTP for sftpusers
+  blockinfile:
+    dest: /etc/ssh/sshd_config
+    block: |
+      Match Group sftpusers
+        ChrootDirectory /home/%u
+        ForceCommand internal-sftp
+  notify: Restart ssh
