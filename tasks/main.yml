@@ -12,14 +12,23 @@
   user:
     name: "{{ item.name }}"
     groups: sftpusers
-    home: "/home/{{ item.name }}"
+    home: "{{ sftp_home }}/{{ item.name }}"
     password: "{{ item.password }}"
     shell: /bin/false
   with_items: "{{ sftp_users }}"
 
+- name: Prepare home directories
+  file:
+    path: "{{ sftp_home }}/{{ item.name }}"
+    state: directory
+    owner: "root"
+    group: "{{ item.name }}"
+    mode: 0750
+  with_items: "{{ sftp_users }}"
+
 - name: Prepare web directories
   file:
-    path: "/home/{{ item.name }}/www"
+    path: "{{ sftp_home }}/{{ item.name }}/web"
     state: directory
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
@@ -27,7 +36,7 @@
 
 - name: Prepare log directories
   file:
-    path: "/home/{{ item.name }}/log"
+    path: "{{ sftp_home }}/{{ item.name }}/log"
     state: directory
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
@@ -35,7 +44,7 @@
 
 - name: Prepare temp directories
   file:
-    path: "/home/{{ item.name }}/tmp"
+    path: "{{ sftp_home }}/{{ item.name }}/tmp"
     state: directory
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
@@ -53,6 +62,6 @@
     dest: /etc/ssh/sshd_config
     block: |
       Match Group sftpusers
-        ChrootDirectory /home/%u
+        ChrootDirectory {{ sftp_home }}/%u
         ForceCommand internal-sftp
   notify: Restart ssh

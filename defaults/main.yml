@@ -1,3 +1,4 @@
 ---
 # defaults file for role-sftp
 sftp_users: []
+sftp_home: /sftp
