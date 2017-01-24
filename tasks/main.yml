@@ -8,6 +8,11 @@
     name: sftpusers
     state: present
 
+- name: Prepare home root
+  file:
+    path: "{{ sftp_home }}"
+    state: directory
+
 - name: Create sftp users
   user:
     name: "{{ item.name }}"
